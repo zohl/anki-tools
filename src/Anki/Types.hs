@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -124,8 +125,8 @@ getJsonValue f = getTextValue f >>= getValue where
 
 
 fromDictionary :: (Typeable a) => (Field -> (Text, Value) -> Ok a) -> Field -> Value -> Ok [a]
-fromDictionary mkEntry f = \case
-  (Object o) -> mapM (mkEntry f) (toList o)
+fromDictionary mkEntry' f = \case
+  (Object o) -> mapM (mkEntry' f) (toList o)
   _          -> throwErr f WrongJsonFormat
 
 
@@ -161,17 +162,35 @@ dropPrefixOptions :: Options
 dropPrefixOptions = defaultOptions { fieldLabelModifier = dropPrefix }
 
 
-newtype WeaklyTypedInt = WeaklyTypedInt { getInt :: Int } deriving (Show, Eq)
--- TODO Num WeaklyTypedInt
+newtype WeaklyTypedInt = WeaklyTypedInt { getInt :: Int } deriving (Show, Eq, Num)
+
+instance FromJSON WeaklyTypedInt where
+  parseJSON = fmap fromInteger . \case
+    (String s) -> return . read . T.unpack $ s
+    (Number x) -> return . round $ x
+    _ -> error "TODO"
+
+
+newtype WeaklyTypedBool = WeaklyTypedBool { getBool :: Bool } deriving (Show, Eq)
+
+instance FromJSON WeaklyTypedBool where
+  parseJSON = fmap WeaklyTypedBool . \case
+    (String s) -> case s of
+      "false" -> return False
+      "true"  -> return True
+      _       -> error "TODO"
+
+    (Number x) -> case x of
+      0 -> return False
+      1 -> return True
+      _ -> error "TODO"
+
+    _ -> error "TODO"
 
 type DeckId = Int
 type ModelId = WeaklyTypedInt
 type DeckOptionsId = WeaklyTypedInt
 
-instance FromJSON ModelId where
-  parseJSON (String s) = return . WeaklyTypedInt . read . T.unpack $ s
-  parseJSON (Number x) = return . WeaklyTypedInt . round $ x
-  parseJSON _ = undefined
 
 -- | Global opitions
 data GlobalOptions = GlobalOptions {
@@ -307,7 +326,7 @@ data DeckExtension
     } deriving (Show, Eq, Generic)
 
 instance FromJSON DeckExtension where
-  parseJSON = withObject "DeckExtension" $ \o -> (/= (0 :: Int)) <$> (o .: "dyn") >>= \case
+  parseJSON = withObject "DeckExtension" $ \o -> getBool <$> (o .: "dyn") >>= \case
       False -> do
         deckBrowserCollapsed <- o .: "browserCollapsed"
         deckConf             <- o .: "conf"
@@ -344,20 +363,7 @@ instance FromJSON DeckOptions where
   parseJSON = genericParseJSON dropPrefixOptions
 
 instance FromField [DeckOptions] where
-  fromField f = getJsonValue f >>= mkDeckOptions where
-
-    mkDeckOptions :: Value -> Ok [DeckOptions]
-    mkDeckOptions = \case
-      (Object o) -> mapM mkDeckOption (toList o)
-      _          -> throwErr f WrongJsonFormat
-
-    mkDeckOption :: (Text, Value) -> Ok DeckOptions
-    mkDeckOption = \case
-      (key, value) -> do
-        doId' <- maybe (throwErr f WrongJsonFormat) return . decode . BSLC8.pack . T.unpack $ key
-        deckOption <- maybe (throwErr f WrongJsonFormat) return . decode . encode $ value
-        unless (doId' == doId deckOption) $ throwErr f DeckOptionsIdInconsistent
-        return deckOption
+  fromField f = getJsonValue f >>= fromDictionary (mkEntry doId DeckOptionsIdInconsistent) f
 
 -- | Options from cols.deck.dconf.lapse
 data DeckOptionsLapse = DeckOptionsLapse {
@@ -414,3 +420,4 @@ instance FromField [Tag] where
     mkTag f' = \case
       (name, Number number) -> return $ Tag (T.unpack name) (round number)
       _                     -> throwErr f' WrongJsonFormat
+
