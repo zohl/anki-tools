@@ -28,12 +28,17 @@ module Anki.Types (
   , DeckOptionsNew(..)
 
   , Tag(..)
+
+  , Note(..)
+  , NoteField(..)
+
   ) where
 
 import Control.Exception (Exception)
 import Control.Monad (unless)
 import Data.Aeson (Value(..), encode, decode, FromJSON(..), genericParseJSON)
 import Data.Aeson.Types (Options(..), defaultOptions, (.:), withObject)
+import Data.Char (toLower, isUpper, chr)
 import Data.HashMap.Strict (toList)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
@@ -45,7 +50,6 @@ import GHC.Generics (Generic)
 import qualified Data.ByteString.Lazy.Char8 as BSLC8
 import qualified Data.Text as T
 import Debug.Trace
-import Data.Char (toLower, isUpper)
 
 -- | The exception is thrown when something goes wrong with this package.
 data AnkiException
@@ -170,6 +174,9 @@ instance FromJSON WeaklyTypedInt where
     (Number x) -> return . round $ x
     _ -> error "TODO"
 
+instance FromField WeaklyTypedInt where
+  fromField f = fromInteger <$> fromField f
+
 
 newtype WeaklyTypedBool = WeaklyTypedBool { getBool :: Bool } deriving (Show, Eq)
 
@@ -187,7 +194,8 @@ instance FromJSON WeaklyTypedBool where
 
     _ -> error "TODO"
 
-type DeckId = Int
+
+type DeckId = WeaklyTypedInt
 type ModelId = WeaklyTypedInt
 type DeckOptionsId = WeaklyTypedInt
 
@@ -276,10 +284,10 @@ instance FromJSON ModelTemplate where
 
 -- | TODO: Deck
 data Deck = Deck {
-    deckName              :: Value         -- TODO String?
+    deckId                :: DeckId
+  , deckName              :: Value         -- TODO String?
   , deckCollapsed         :: Value         -- TODO Bool?
   , deckDesc              :: Value         -- TODO String?
-  , deckId                :: Value         -- TODO DeckId?
   , deckMod               :: Value         -- TODO Int?
   , deckUsn               :: Value         -- TODO Int?
   , deckLrnToday          :: Value         -- TODO (Int, Int)?
@@ -421,3 +429,43 @@ instance FromField [Tag] where
       (name, Number number) -> return $ Tag (T.unpack name) (round number)
       _                     -> throwErr f' WrongJsonFormat
 
+
+fieldSeparator :: Char
+fieldSeparator = chr 0x1F
+
+-- | Notes from notes table
+data Note = Note {
+    noteId    :: Int -- TODO separate type?
+  , noteGuid  :: String
+  , noteMid   :: ModelId
+  , noteMod   :: Int -- TODO check type
+  , noteUsn   :: Int -- TODO check type
+  , noteTags  :: String -- TODO ?
+  , noteFlds  :: [NoteField]
+  , noteSfld  :: NoteField
+  , noteCsum  :: Int -- TODO check type
+  , noteFlags :: Int -- TODO check type
+  , noteData  :: String -- TODO check type
+  } deriving (Show, Eq, Generic)
+
+instance FromRow Note where
+  fromRow = Note
+    <$> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+
+newtype NoteField = NoteField { getNoteField :: Text } deriving (Show, Eq)
+
+instance FromField NoteField where
+  fromField f = NoteField <$> fromField f
+
+instance FromField [NoteField] where
+  fromField f = (fmap NoteField . T.split (== fieldSeparator)) <$> fromField f

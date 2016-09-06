@@ -28,7 +28,9 @@ main = do
   userProfile <- getUserProfile $ lookup "--user-profile" args
   -- let output = show userProfile
 
-  collection <- getCollection userProfile $ read <$> (lookup "--collection" args)
-  let output = show collection
+  -- collection <- getCollection userProfile $ read <$> (lookup "--collection" args)
+  -- let output = show collection
+  notes <- getNotes def userProfile
+  let output = show notes
 
   putStrLn output

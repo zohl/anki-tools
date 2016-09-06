@@ -4,6 +4,7 @@
 module Anki.Tools (
     getUserProfiles
   , getCollections
+  , getNotes
   ) where
 
 import Anki.Misc
@@ -25,3 +26,11 @@ getCollections (AnkiPathsConfiguration {..}) (UserProfile {..}) = bracket
   (open =<< (joinPath . (:[apcRoot, upName, apcCollection]) <$> getHomeDirectory))
   (close)
   (flip query_ "select id, crt, mod, scm, ver, dty, usn, ls, conf, models, decks, dconf, tags from col")
+
+getNotes :: AnkiPathsConfiguration -> UserProfile -> IO [Note]
+getNotes (AnkiPathsConfiguration {..}) (UserProfile {..}) = bracket
+  (open =<< (joinPath . (:[apcRoot, upName, apcCollection]) <$> getHomeDirectory))
+  (close)
+  (flip query_ "select id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data from notes")
+
+
