@@ -32,6 +32,7 @@ module Anki.Types (
   , Note(..)
   , NoteField(..)
 
+  , Card(..)
   ) where
 
 import Control.Exception (Exception)
@@ -373,7 +374,7 @@ instance FromJSON DeckOptions where
 instance FromField [DeckOptions] where
   fromField f = getJsonValue f >>= fromDictionary (mkEntry doId DeckOptionsIdInconsistent) f
 
--- | Options from cols.deck.dconf.lapse
+-- | Options from cols.deck.dconf.lapse.
 data DeckOptionsLapse = DeckOptionsLapse {
     dolLeechFails  :: Value -- TODO Int?
   , dolMinInt      :: Value -- TODO Int?
@@ -386,7 +387,7 @@ instance FromJSON DeckOptionsLapse where
   parseJSON = genericParseJSON dropPrefixOptions
 
 
--- | Options from cols.deck.dconf.new
+-- | Options from cols.deck.dconf.new.
 data DeckOptionsNew = DeckOptionsNew {
     donPerDay        :: Value -- TODO Int?
   , donDelays        :: Value -- TODO (Int, Int)?
@@ -416,7 +417,7 @@ instance FromJSON DeckOptionsRev where
   parseJSON = genericParseJSON dropPrefixOptions
 
 
--- | Tags from col.tags
+-- | Tags from col.tags.
 data Tag = Tag {
     tagName   :: String -- ^ tag name (key)
   , tagNumber :: Int    -- ^ TODO: wtf? (value)
@@ -433,7 +434,7 @@ instance FromField [Tag] where
 fieldSeparator :: Char
 fieldSeparator = chr 0x1F
 
--- | Notes from notes table
+-- | Notes from notes table.
 data Note = Note {
     noteId    :: Int -- TODO separate type?
   , noteGuid  :: String
@@ -469,3 +470,47 @@ instance FromField NoteField where
 
 instance FromField [NoteField] where
   fromField f = (fmap NoteField . T.split (== fieldSeparator)) <$> fromField f
+
+
+-- | Cards from cards table.
+data Card = Card {
+    cardId     :: Int -- TODO separate type?
+  , cardNid    :: Int -- TODO noteId ?
+  , cardDid    :: DeckId
+  , cardOrd    :: Int   -- TODO check type
+  , cardMod    :: Int   -- TODO check type
+  , cardUsn    :: Int   -- TODO check type
+  , cardType   :: Int   -- TODO check type
+  , cardQueue  :: Int   -- TODO check type
+  , cardDue    :: Int   -- TODO check type
+  , cardIvl    :: Int   -- TODO check type
+  , cardFactor :: Int   -- TODO check type
+  , cardReps   :: Int   -- TODO check type
+  , cardLapses :: Int   -- TODO check type
+  , cardLeft   :: Int   -- TODO check type
+  , cardOdue   :: Int   -- TODO check type
+  , cardOdid   :: Int   -- TODO check type
+  , cardFlags  :: Int   -- TODO check type
+  , cardData   :: Text  -- TODO check type
+  } deriving (Show, Eq, Generic)
+
+instance FromRow Card where
+  fromRow = Card
+    <$> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field
+    <*> field

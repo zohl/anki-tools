@@ -30,7 +30,11 @@ main = do
 
   -- collection <- getCollection userProfile $ read <$> (lookup "--collection" args)
   -- let output = show collection
-  notes <- getNotes def userProfile
-  let output = show notes
+
+  -- notes <- getNotes def userProfile
+  -- let output = show notes
+
+  cards <- getCards def userProfile
+  let output = show cards
 
   putStrLn output
