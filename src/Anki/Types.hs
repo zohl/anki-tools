@@ -6,6 +6,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Anki.Types (
     UserProfile(..)
@@ -40,6 +41,8 @@ import Control.Monad (unless)
 import Data.Aeson (Value(..), encode, decode, FromJSON(..), genericParseJSON)
 import Data.Aeson.Types (Options(..), defaultOptions, (.:), withObject)
 import Data.Char (toLower, isUpper, chr)
+import Data.Time.Clock (UTCTime)
+import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds, posixSecondsToUTCTime)
 import Data.HashMap.Strict (toList)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
@@ -85,7 +88,7 @@ instance FromRow UserProfile where
 data Collection = Collection {
     collectionId            :: Int            -- ^ collection identifier (id)
   , collectionCrt           :: Int            -- TODO check type
-  , collectionMod           :: Int            -- TODO check type
+  , collectionMod           :: ModificationTime
   , collectionScm           :: Int            -- TODO check type
   , collectionVer           :: Int            -- TODO check type
   , collectionDty           :: Int            -- TODO check type
@@ -96,7 +99,7 @@ data Collection = Collection {
   , collectionDecks         :: [Deck]         -- ^ decks in the collection (col.decks)
   , collectionDeckOptions   :: [DeckOptions]  -- ^ deck options (col.dconf)
   , collectionTags          :: [Tag]          -- ^ tags (col.tags)
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 
 instance FromRow Collection where
   fromRow = Collection
@@ -201,6 +204,18 @@ type ModelId = WeaklyTypedInt
 type DeckOptionsId = WeaklyTypedInt
 
 
+newtype ModificationTime = ModificationTime { getModificationTime :: UTCTime } deriving (Show, Eq)
+
+instance FromField ModificationTime where
+  fromField f = (ModificationTime . posixSecondsToUTCTime . fromInteger) <$> fromField f
+
+instance FromJSON ModificationTime where
+  parseJSON = fmap (ModificationTime . posixSecondsToUTCTime . fromInteger) . parseJSON
+
+
+type NoteId = Int
+type CardId = Int
+
 -- | Global opitions
 data GlobalOptions = GlobalOptions {
    goNextPos       :: Value     -- TODO Int?
@@ -236,7 +251,7 @@ data Model = Model {
   , modelFlds      :: [ModelField]
   , modelLatexPre  :: Value -- TODO String?
   , modelLatexPost :: Value -- TODO String?
-  , modelMod       :: Value -- TODO Int?
+  , modelMod       :: ModificationTime
   , modelName      :: Value -- TODO String?
   , modelSortf     :: Value -- TODO Int?
   , modelTags      :: Value -- TODO: [wtf]?
@@ -289,7 +304,7 @@ data Deck = Deck {
   , deckName              :: Value         -- TODO String?
   , deckCollapsed         :: Value         -- TODO Bool?
   , deckDesc              :: Value         -- TODO String?
-  , deckMod               :: Value         -- TODO Int?
+  , deckMod               :: ModificationTime
   , deckUsn               :: Value         -- TODO Int?
   , deckLrnToday          :: Value         -- TODO (Int, Int)?
   , deckNewToday          :: Value         -- TODO (Int, Int)?
@@ -359,7 +374,7 @@ data DeckOptions = DeckOptions {
   , doDyn      :: Value -- TODO Bool?
   , doLapse    :: DeckOptionsLapse  -- ^ TODO
   , doMaxTaken :: Value -- TODO Int?
-  , doMod      :: Value -- TODO Int?
+  , doMod      :: ModificationTime
   , doName     :: Value -- TODO String?
   , doNew      :: DeckOptionsNew    -- ^ TODO
   , doReplayq  :: Value -- TODO Bool?
@@ -436,10 +451,10 @@ fieldSeparator = chr 0x1F
 
 -- | Notes from notes table.
 data Note = Note {
-    noteId    :: Int -- TODO separate type?
+    noteId    :: NoteId
   , noteGuid  :: String
   , noteMid   :: ModelId
-  , noteMod   :: Int -- TODO check type
+  , noteMod   :: ModificationTime
   , noteUsn   :: Int -- TODO check type
   , noteTags  :: String -- TODO ?
   , noteFlds  :: [NoteField]
@@ -474,11 +489,11 @@ instance FromField [NoteField] where
 
 -- | Cards from cards table.
 data Card = Card {
-    cardId     :: Int -- TODO separate type?
-  , cardNid    :: Int -- TODO noteId ?
+    cardId     :: CardId
+  , cardNid    :: NoteId
   , cardDid    :: DeckId
   , cardOrd    :: Int   -- TODO check type
-  , cardMod    :: Int   -- TODO check type
+  , cardMod    :: ModificationTime
   , cardUsn    :: Int   -- TODO check type
   , cardType   :: Int   -- TODO check type
   , cardQueue  :: Int   -- TODO check type

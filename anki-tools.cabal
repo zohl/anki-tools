@@ -37,6 +37,7 @@ library
                , mtl
                , scientific
                , sqlite-simple
+               , time
                , text
                , unordered-containers
 
