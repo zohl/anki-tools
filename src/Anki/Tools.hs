@@ -9,7 +9,10 @@ module Anki.Tools (
   ) where
 
 import Anki.Misc
-import Anki.Types
+import Anki.UserProfile
+import Anki.Collection
+import Anki.Note
+import Anki.Card
 import Control.Exception (bracket)
 import Database.SQLite.Simple (open, close, query_)
 import System.Directory (getHomeDirectory)
@@ -38,4 +41,4 @@ getCards :: AnkiPathsConfiguration -> UserProfile -> IO [Card]
 getCards (AnkiPathsConfiguration {..}) (UserProfile {..}) = bracket
   (open =<< (joinPath . (:[apcRoot, upName, apcCollection]) <$> getHomeDirectory))
   (close)
-  (flip query_ "select id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data from cards")
+  (flip query_ "select id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data from cards limit 20")

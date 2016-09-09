@@ -3,8 +3,10 @@
 import Data.Default (def)
 import System.Environment (getArgs)
 import Anki.Tools
-import Anki.Types
-import Anki.Misc
+import Anki.Collection
+import Anki.Note
+import Anki.Card
+import Anki.UserProfile
 
 
 splitArgs :: [String] -> [(String, String)]

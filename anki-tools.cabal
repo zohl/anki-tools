@@ -24,8 +24,14 @@ flag dev
 library
   exposed-modules:
     Anki.Tools
-    Anki.Types
+    Anki.Collection
+    Anki.Common
+    Anki.Model
+    Anki.Deck
+    Anki.Note
+    Anki.Card
     Anki.Misc
+    Anki.UserProfile
 
   build-depends: base >=4.8 && < 5.0
                , aeson
