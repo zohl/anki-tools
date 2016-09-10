@@ -1,12 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Anki.Collection (
     Collection(..)
@@ -14,27 +8,19 @@ module Anki.Collection (
   , Tag(..)
   ) where
 
-import Anki.Common
-import Anki.Deck
-import Anki.Model
-import Control.Exception (Exception)
-import Control.Monad (unless)
-import Data.Aeson (Value(..), encode, decode, FromJSON(..), genericParseJSON)
-import Data.Aeson.Types (Options(..), defaultOptions, (.:), withObject)
-import Data.Char (toLower, isUpper, chr)
-import Data.Time.Clock (UTCTime)
-import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds, posixSecondsToUTCTime)
-import Data.HashMap.Strict (toList)
+
+import Anki.Common (ModificationTime, AnkiException(..), throwErr)
+import Anki.Common (dropPrefixOptions, getTextValue, getJsonValue, fromDictionary)
+import Anki.Deck (DeckId, Deck, DeckOptions)
+import Anki.Model (ModelId, Model)
+import Data.Aeson (Value(..), decode, FromJSON(..), genericParseJSON)
 import Data.Text (Text)
-import Data.Typeable (Typeable)
-import Database.SQLite.Simple (FromRow(..), SQLData(..), field)
-import Database.SQLite.Simple.FromField (FromField(..), ResultError(..), returnError)
+import Database.SQLite.Simple (FromRow(..), field)
+import Database.SQLite.Simple.FromField (FromField(..))
 import Database.SQLite.Simple.Internal (Field(..))
 import Database.SQLite.Simple.Ok (Ok(..))
 import GHC.Generics (Generic)
-import qualified Data.ByteString.Lazy.Char8 as BSLC8
 import qualified Data.Text as T
-import Debug.Trace
 
 
 -- | Collection as in col table
