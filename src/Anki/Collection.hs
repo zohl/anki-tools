@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Collection
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a collection (and some other things).
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -23,7 +34,7 @@ import GHC.Generics (Generic)
 import qualified Data.Text as T
 
 
--- | Collection as in col table
+-- | Collection as in col table.
 data Collection = Collection {
     collectionId            :: Int            -- ^ collection identifier (id)
   , collectionCrt           :: Int            -- TODO check type
@@ -57,7 +68,7 @@ instance FromRow Collection where
     <*> field
 
 
--- | Global opitions
+-- | Global opitions.
 data GlobalOptions = GlobalOptions {
    goNextPos       :: Value     -- TODO Int?
  , goEstTimes      :: Value     -- TODO Bool?

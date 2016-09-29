@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Deck
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a Deck and related things.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -27,7 +38,7 @@ import Data.Aeson.Types ((.:), withObject)
 import Database.SQLite.Simple.FromField (FromField(..))
 import GHC.Generics (Generic)
 
-
+-- | Type for deck options ids.
 type DeckOptionsId = WeaklyTypedInt
 
 data DeckOptions = DeckOptions {
@@ -129,7 +140,7 @@ instance FromJSON DeckOptionsRev where
   parseJSON = genericParseJSON dropPrefixOptions
 
 
-
+-- | Type for deck ids.
 type DeckId = WeaklyTypedInt
 
 data Deck = Deck {

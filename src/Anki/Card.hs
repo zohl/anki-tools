@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Card
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a card.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 
 module Anki.Card (
@@ -13,7 +24,7 @@ import Data.Text (Text)
 import Database.SQLite.Simple (FromRow(..), field)
 import GHC.Generics (Generic)
 
-
+-- | Type for card ids.
 type CardId = Int
 
 -- | Cards from cards table.

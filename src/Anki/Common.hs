@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Common
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Auxiliary functions and types.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -53,18 +64,22 @@ data AnkiException
 
 instance (Exception AnkiException)
 
+-- | Exit from Ok monad.
 throwErr :: (Typeable a) => Field -> AnkiException -> Ok a
 throwErr f ex = returnError ConversionFailed f $ show ex
 
+-- | Read field as a byte sequence.
 getTextValue :: Field -> Ok BSLC8.ByteString
 getTextValue = \case
   (Field (SQLText txt) _) -> return . BSLC8.pack . T.unpack $ txt
   f                       -> throwErr f WrongFieldType
 
+-- | Read field as a JSON.
 getJsonValue :: Field -> Ok Value
 getJsonValue f = getTextValue f >>= getValue where
   getValue :: BSLC8.ByteString -> Ok Value
   getValue = maybe (throwErr f NotJson) return . decode
+
 
 fromDictionary :: (Typeable a) => (Field -> (Text, Value) -> Ok a) -> Field -> Value -> Ok [a]
 fromDictionary mkEntry' f = \case
@@ -93,7 +108,7 @@ mkEntry entryId entryIdException f (key, value) = do
   unless (entryId' == entryId entry) $ throwErr f entryIdException
   return entry
 
-
+-- | Cut the first word and lowercase the second.
 dropPrefix :: String -> String
 dropPrefix "" = ""
 dropPrefix (c:t)
@@ -103,7 +118,7 @@ dropPrefix (c:t)
 dropPrefixOptions :: Options
 dropPrefixOptions = defaultOptions { fieldLabelModifier = dropPrefix }
 
-
+-- | A wrapper to handle integers and strings with integers.
 newtype WeaklyTypedInt = WeaklyTypedInt { getInt :: Int } deriving (Show, Eq, Num)
 
 instance FromJSON WeaklyTypedInt where
@@ -115,7 +130,7 @@ instance FromJSON WeaklyTypedInt where
 instance FromField WeaklyTypedInt where
   fromField f = fromInteger <$> fromField f
 
-
+-- | A wrapper to handle booleans, strings with booleans and 0-1 integers.
 newtype WeaklyTypedBool = WeaklyTypedBool { getBool :: Bool } deriving (Show, Eq)
 
 instance FromJSON WeaklyTypedBool where
@@ -133,6 +148,7 @@ instance FromJSON WeaklyTypedBool where
     _ -> error "TODO"
 
 
+-- | A wrapper handle time in POSIX format.
 newtype ModificationTime = ModificationTime { getModificationTime :: UTCTime } deriving (Show, Eq)
 
 instance FromField ModificationTime where
