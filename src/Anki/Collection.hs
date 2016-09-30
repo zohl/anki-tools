@@ -6,7 +6,7 @@
   Stability:   experimental
 
   = Description
-  Representation of a collection (and some other things).
+  Representation of a collection and related definitions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}

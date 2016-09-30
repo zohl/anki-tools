@@ -80,13 +80,13 @@ getJsonValue f = getTextValue f >>= getValue where
   getValue :: BSLC8.ByteString -> Ok Value
   getValue = maybe (throwErr f NotJson) return . decode
 
-
+-- | Transform a JSON-dictionary to a list of values.
 fromDictionary :: (Typeable a) => (Field -> (Text, Value) -> Ok a) -> Field -> Value -> Ok [a]
 fromDictionary mkEntry' f = \case
   (Object o) -> mapM (mkEntry' f) (toList o)
   _          -> throwErr f WrongJsonFormat
 
-
+-- | Transform a single pair from JSON-dictionary of type { <id>: {id: <id>, ....} } to a record.
 mkEntry :: (Typeable a, FromJSON a, Eq b, Typeable b, FromJSON b)
   => (a -> b)
   -> AnkiException
@@ -115,6 +115,7 @@ dropPrefix (c:t)
   | isUpper c = toLower c : t
   | otherwise = dropPrefix t
 
+-- | Default options used in Aeson typeclasses in this module.
 dropPrefixOptions :: Options
 dropPrefixOptions = defaultOptions { fieldLabelModifier = dropPrefix }
 

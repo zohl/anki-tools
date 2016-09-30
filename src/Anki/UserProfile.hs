@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.UserProfile
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a user profile and related definitions.
+-}
+
 module Anki.UserProfile (
     UserProfile(..)
   ) where

@@ -6,4 +6,7 @@ Tools for interacting with Anki database
 ## Status
 
 The library is under heavy development and the whole idea is still experimental.
+At the moment here are partially implemented representations of Anki's
+internals and a few functions to read them from the database.
+
 Always make backups of your collections!

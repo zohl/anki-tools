@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Model
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a model and related definitions.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -14,7 +25,7 @@ import Data.Aeson (Value(..), FromJSON(..), genericParseJSON)
 import Database.SQLite.Simple.FromField (FromField(..))
 import GHC.Generics (Generic)
 
-
+-- | Type for model ids.
 type ModelId = WeaklyTypedInt
 
 -- | Model from col.models

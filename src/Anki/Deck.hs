@@ -6,7 +6,7 @@
   Stability:   experimental
 
   = Description
-  Representation of a Deck and related things.
+  Representation of a deck and related definitions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}
@@ -27,6 +27,7 @@ module Anki.Deck (
   , DeckOptionsNew(..)
 
   , Deck(..)
+  , DeckExtension(..)
   , DeckId
   ) where
 
@@ -41,6 +42,7 @@ import GHC.Generics (Generic)
 -- | Type for deck options ids.
 type DeckOptionsId = WeaklyTypedInt
 
+-- | Representation of deck options.
 data DeckOptions = DeckOptions {
     doId       :: DeckOptionsId
   , doAutoplay :: Value -- TODO Bool?
@@ -63,7 +65,7 @@ instance FromField [DeckOptions] where
   fromField f = getJsonValue f >>= fromDictionary (mkEntry doId DeckOptionsIdInconsistent) f
 
 
--- | Volatile fields of col.decks
+-- | Volatile fields of col.decks.
 data DeckExtension
   = NormalDeck {
       deckBrowserCollapsed  :: Value   -- TODO Bool?
@@ -143,6 +145,7 @@ instance FromJSON DeckOptionsRev where
 -- | Type for deck ids.
 type DeckId = WeaklyTypedInt
 
+-- | Representation of a deck.
 data Deck = Deck {
     deckId                :: DeckId
   , deckName              :: Value         -- TODO String?

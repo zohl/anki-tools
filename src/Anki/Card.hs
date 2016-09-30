@@ -6,7 +6,7 @@
   Stability:   experimental
 
   = Description
-  Representation of a card.
+  Representation of a card and related definitions.
 -}
 
 {-# LANGUAGE DeriveGeneric #-}

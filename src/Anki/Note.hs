@@ -1,3 +1,14 @@
+{-|
+  Module:      Anki.Note
+  Copyright:   (c) 2016 Al Zohali
+  License:     BSD3
+  Maintainer:  Al Zohali <zohl@fmap.me>
+  Stability:   experimental
+
+  = Description
+  Representation of a note and related definitions.
+-}
+
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -16,7 +27,7 @@ import Database.SQLite.Simple.FromField (FromField(..))
 import GHC.Generics (Generic)
 import qualified Data.Text as T
 
-
+-- | Type for note ids.
 type NoteId = Int
 
 fieldSeparator :: Char
@@ -51,6 +62,7 @@ instance FromRow Note where
     <*> field
     <*> field
 
+-- | Representation of note fields as they store in the database.
 newtype NoteField = NoteField { getNoteField :: Text } deriving (Show, Eq)
 
 instance FromField NoteField where
