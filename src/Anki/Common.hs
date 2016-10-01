@@ -19,6 +19,8 @@ module Anki.Common (
   , WeaklyTypedInt(..)
   , WeaklyTypedBool(..)
   , ModificationTime(..)
+  , TimeIntervalInSeconds(..)
+  , TimeIntervalInMinutes(..)
   , throwErr
   , getTextValue
   , getJsonValue
@@ -33,9 +35,10 @@ import Control.Monad (unless)
 import Data.Aeson (Value(..), encode, decode, FromJSON(..))
 import Data.Aeson.Types (Options(..), defaultOptions)
 import Data.Char (toLower, isUpper)
+import Data.Default (Default(..))
 import Data.HashMap.Strict (toList)
 import Data.Text (Text)
-import Data.Time.Clock (UTCTime)
+import Data.Time.Clock (UTCTime, NominalDiffTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Data.Typeable (Typeable)
 import Database.SQLite.Simple (SQLData(..))
@@ -152,8 +155,40 @@ instance FromJSON WeaklyTypedBool where
 -- | A wrapper handle time in POSIX format.
 newtype ModificationTime = ModificationTime { getModificationTime :: UTCTime } deriving (Show, Eq)
 
+instance Default ModificationTime where
+  def = ModificationTime . posixSecondsToUTCTime . fromInteger $ 0
+
 instance FromField ModificationTime where
   fromField f = (ModificationTime . posixSecondsToUTCTime . fromInteger) <$> fromField f
 
 instance FromJSON ModificationTime where
   parseJSON = fmap (ModificationTime . posixSecondsToUTCTime . fromInteger) . parseJSON
+
+
+
+-- | A wrapper for time interval (in seconds).
+newtype TimeIntervalInSeconds = TimeIntervalInSeconds { getTimeIntervalInSeconds :: NominalDiffTime }
+  deriving (Show, Eq)
+
+instance Default TimeIntervalInSeconds where
+  def = TimeIntervalInSeconds . fromInteger $ 0
+
+instance FromField TimeIntervalInSeconds where
+  fromField f = (TimeIntervalInSeconds . fromInteger) <$> fromField f
+
+instance FromJSON TimeIntervalInSeconds where
+  parseJSON = fmap (TimeIntervalInSeconds . fromInteger) . parseJSON
+
+
+-- | A wrapper for time interval (in minutes).
+newtype TimeIntervalInMinutes = TimeIntervalInMinutes { getTimeIntervalInMinutes :: NominalDiffTime }
+  deriving (Show, Eq)
+
+instance Default TimeIntervalInMinutes where
+  def = TimeIntervalInMinutes . fromInteger $ 0
+
+instance FromField TimeIntervalInMinutes where
+  fromField f = (TimeIntervalInMinutes . fromInteger . (flip div 60)) <$> fromField f
+
+instance FromJSON TimeIntervalInMinutes where
+  parseJSON = fmap (TimeIntervalInMinutes . fromInteger . (flip div 60)) . parseJSON

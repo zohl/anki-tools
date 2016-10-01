@@ -70,22 +70,22 @@ instance FromRow Collection where
 
 -- | Global opitions.
 data GlobalOptions = GlobalOptions {
-   goNextPos       :: Value     -- TODO Int?
- , goEstTimes      :: Value     -- TODO Bool?
- , goSortBackwards :: Value     -- TODO Bool?
- , goSortType      :: Value     -- TODO String?
- , goTimeLim       :: Value     -- TODO Int?
+   goNextPos       :: Maybe Value     -- TODO Int?
+ , goEstTimes      :: Maybe Value     -- TODO Bool?
+ , goSortBackwards :: Maybe Value     -- TODO Bool?
+ , goSortType      :: Maybe Value     -- TODO String?
+ , goTimeLim       :: Maybe Value     -- TODO Int?
  , goActiveDecks   :: [DeckId]  -- ^ TODO
- , goAddToCur      :: Value     -- TODO Bool?
- , goCurDeck       :: Value     -- TODO DeckId?
+ , goAddToCur      :: Maybe Value     -- TODO Bool?
+ , goCurDeck       :: Maybe Value     -- TODO DeckId?
  , goCurModel      :: ModelId   -- ^ TODO
- , goLastUnburied  :: Value     -- TODO Int?
- , goCollapseTime  :: Value     -- TODO Int?
- , goActiveCols    :: Value     -- TODO [String]?
- , goSavedFilters  :: Value     -- TODO [wtf]?
- , goDueCounts     :: Value     -- TODO Bool?
- , goNewBury       :: Value     -- TODO Bool?
- , goNewSpread     :: Value     -- TODO Int?
+ , goLastUnburied  :: Maybe Value     -- TODO Int?
+ , goCollapseTime  :: Maybe Value     -- TODO Int?
+ , goActiveCols    :: Maybe Value     -- TODO [String]?
+ , goSavedFilters  :: Maybe Value     -- TODO [wtf]?
+ , goDueCounts     :: Maybe Value     -- TODO Bool?
+ , goNewBury       :: Maybe Value     -- TODO Bool?
+ , goNewSpread     :: Maybe Value     -- TODO Int?
  } deriving (Show, Eq, Generic)
 
 instance FromJSON GlobalOptions where

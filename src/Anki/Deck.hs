@@ -32,10 +32,12 @@ module Anki.Deck (
   ) where
 
 
-import Anki.Common (WeaklyTypedInt, WeaklyTypedBool(..), ModificationTime, AnkiException(..))
+import Anki.Common (WeaklyTypedInt(..), WeaklyTypedBool(..), ModificationTime(..), AnkiException(..))
+import Anki.Common (TimeIntervalInSeconds(..))
 import Anki.Common (dropPrefixOptions, getJsonValue, fromDictionary, mkEntry)
 import Data.Aeson (Value(..), FromJSON(..), genericParseJSON)
-import Data.Aeson.Types ((.:), withObject)
+import Data.Aeson.Types ((.:), (.:?), withObject)
+import Data.Default (Default(..))
 import Database.SQLite.Simple.FromField (FromField(..))
 import GHC.Generics (Generic)
 
@@ -44,59 +46,41 @@ type DeckOptionsId = WeaklyTypedInt
 
 -- | Representation of deck options.
 data DeckOptions = DeckOptions {
-    doId       :: DeckOptionsId
-  , doAutoplay :: Value -- TODO Bool?
-  , doDyn      :: Value -- TODO Bool?
-  , doLapse    :: DeckOptionsLapse  -- ^ TODO
-  , doMaxTaken :: Value -- TODO Int?
-  , doMod      :: ModificationTime
-  , doName     :: Value -- TODO String?
-  , doNew      :: DeckOptionsNew    -- ^ TODO
-  , doReplayq  :: Value -- TODO Bool?
-  , doRev      :: DeckOptionsRev    -- ^ TODO
-  , doTimer    :: Value -- TODO Int/Bool?
-  , doUsn      :: Value -- TODO Int?
+    doId       :: DeckOptionsId         -- ^ Deck options id.
+  , doAutoplay :: Bool                  -- ^ Do play media automatically?
+  , doDyn      :: Bool                  -- ^ Is deck dynamical?
+  , doMaxTaken :: TimeIntervalInSeconds -- ^ Ignore answers after given time interval.
+  , doName     :: String                -- ^ Name of the options group.
+  , doReplayq  :: Bool                  -- ^ Do replay media from question when showing answer?
+  , doTimer    :: WeaklyTypedBool       -- ^ Do show timer?
+  , doMod      :: ModificationTime      -- ^ Modification time
+  , doUsn      :: Maybe Value           -- TODO Int?
+  , doNew      :: DeckOptionsNew        -- ^ Options for new cards.
+  , doLapse    :: DeckOptionsLapse      -- ^ Options for lapses.
+  , doRev      :: DeckOptionsRev        -- ^ Options for reviews.
   } deriving (Show, Eq, Generic)
+
+instance Default DeckOptions where
+  def = DeckOptions {
+      doId       = WeaklyTypedInt 0
+    , doAutoplay = True
+    , doDyn      = False
+    , doMaxTaken = TimeIntervalInSeconds 60
+    , doName     = "Default"
+    , doReplayq  = True
+    , doTimer    = WeaklyTypedBool False
+    , doMod      = def
+    , doUsn      = undefined -- TODO
+    , doNew      = def
+    , doLapse    = def
+    , doRev      = def
+    }
 
 instance FromJSON DeckOptions where
   parseJSON = genericParseJSON dropPrefixOptions
 
 instance FromField [DeckOptions] where
   fromField f = getJsonValue f >>= fromDictionary (mkEntry doId DeckOptionsIdInconsistent) f
-
-
--- | Volatile fields of col.decks.
-data DeckExtension
-  = NormalDeck {
-      deckBrowserCollapsed  :: Value   -- TODO Bool?
-    , deckConf              :: Value   -- TODO DeckOptionsId?
-    , deckExtendNew         :: Value   -- TODO Int?
-    , deckExtendRev         :: Value   -- TODO Int?
-    }
-  | DynamicDeck {
-      deckDelays            :: Value   -- TODO Int?
-    , deckResched           :: Value   -- TODO Bool?
-    , deckReturn            :: Value   -- TODO Bool?
-    , deckSeparate          :: Value   -- TODO Bool?
-    , deckTerms             :: Value   -- TODO [[wtf]]?
-    } deriving (Show, Eq, Generic)
-
-instance FromJSON DeckExtension where
-  parseJSON = withObject "DeckExtension" $ \o -> getBool <$> (o .: "dyn") >>= \case
-      False -> do
-        deckBrowserCollapsed <- o .: "browserCollapsed"
-        deckConf             <- o .: "conf"
-        deckExtendNew        <- o .: "extendNew"
-        deckExtendRev        <- o .: "extendRev"
-        return NormalDeck {..}
-
-      True -> do
-        deckDelays   <- o .: "delays"
-        deckResched  <- o .: "resched"
-        deckReturn   <- o .: "return"
-        deckSeparate <- o .: "separate"
-        deckTerms    <- o .: "terms"
-        return DynamicDeck {..}
 
 
 -- | Options from cols.deck.dconf.lapse.
@@ -108,20 +92,40 @@ data DeckOptionsLapse = DeckOptionsLapse {
   , dolMult        :: Value -- TODO Double?
   } deriving (Show, Eq, Generic)
 
+instance Default DeckOptionsLapse where
+  def = DeckOptionsLapse {
+    dolLeechFails  = undefined -- TODO
+  , dolMinInt      = undefined -- TODO
+  , dolDelays      = undefined -- TODO
+  , dolLeechAction = undefined -- TODO
+  , dolMult        = undefined -- TODO
+  }
+
 instance FromJSON DeckOptionsLapse where
   parseJSON = genericParseJSON dropPrefixOptions
 
 
 -- | Options from cols.deck.dconf.new.
 data DeckOptionsNew = DeckOptionsNew {
-    donPerDay        :: Value -- TODO Int?
-  , donDelays        :: Value -- TODO (Int, Int)?
-  , donSeparate      :: Value -- TODO Bool?
-  , donInts          :: Value -- TODO (Int, Int, Int)?
-  , donInitialFactor :: Value -- TODO Double?
-  , donBury          :: Value -- TODO Bool?
-  , donOrder         :: Value -- TODO Int?
+    donPerDay        :: Maybe Value -- TODO Int?
+  , donDelays        :: Maybe Value -- TODO (Int, Int)?
+  , donSeparate      :: Maybe Value -- TODO Bool?
+  , donInts          :: Maybe Value -- TODO (Int, Int, Int)?
+  , donInitialFactor :: Maybe Value -- TODO Double?
+  , donBury          :: Maybe Value -- TODO Bool?
+  , donOrder         :: Maybe Value -- TODO Int?
   } deriving (Show, Eq, Generic)
+
+instance Default DeckOptionsNew where
+  def = DeckOptionsNew {
+    donPerDay        = undefined -- TODO
+  , donDelays        = undefined -- TODO
+  , donSeparate      = undefined -- TODO
+  , donInts          = undefined -- TODO
+  , donInitialFactor = undefined -- TODO
+  , donBury          = undefined -- TODO
+  , donOrder         = undefined -- TODO
+  }
 
 instance FromJSON DeckOptionsNew where
   parseJSON = genericParseJSON dropPrefixOptions
@@ -129,14 +133,25 @@ instance FromJSON DeckOptionsNew where
 
 -- | Options from cols.deck.dconf.rev
 data DeckOptionsRev = DeckOptionsRev {
-    dorPerDay   :: Value -- TODO Int?
-  , dorFuzz     :: Value -- TODO Double?
-  , dorIvlFct   :: Value -- TODO Double?
-  , dorMaxIvl   :: Value -- TODO Double?
-  , dorEase4    :: Value -- TODO Double?
-  , dorBury     :: Value -- TODO Bool?
-  , dorMinSpace :: Value -- TODO Int?
+    dorPerDay   :: Maybe Value -- TODO Int?
+  , dorFuzz     :: Maybe Value -- TODO Double?
+  , dorIvlFct   :: Maybe Value -- TODO Double?
+  , dorMaxIvl   :: Maybe Value -- TODO Double?
+  , dorEase4    :: Maybe Value -- TODO Double?
+  , dorBury     :: Maybe Value -- TODO Bool?
+  , dorMinSpace :: Maybe Value -- TODO Int?
   } deriving (Show, Eq, Generic)
+
+instance Default DeckOptionsRev where
+  def = DeckOptionsRev {
+    dorPerDay   = undefined -- TODO
+  , dorFuzz     = undefined -- TODO
+  , dorIvlFct   = undefined -- TODO
+  , dorMaxIvl   = undefined -- TODO
+  , dorEase4    = undefined -- TODO
+  , dorBury     = undefined -- TODO
+  , dorMinSpace = undefined -- TODO
+  }
 
 instance FromJSON DeckOptionsRev where
   parseJSON = genericParseJSON dropPrefixOptions
@@ -145,34 +160,67 @@ instance FromJSON DeckOptionsRev where
 -- | Type for deck ids.
 type DeckId = WeaklyTypedInt
 
--- | Representation of a deck.
+-- | Volatile fields of col.decks.
+data DeckExtension
+  = NormalDeck {
+      deckBrowserCollapsed  :: Maybe Value   -- TODO Bool?
+    , deckConf              :: Maybe Value   -- TODO DeckOptionsId?
+    , deckExtendNew         :: Maybe Value   -- TODO Int?
+    , deckExtendRev         :: Maybe Value   -- TODO Int?
+    }
+  | DynamicDeck {
+      deckDelays            :: Maybe Value   -- TODO Int?
+    , deckResched           :: Maybe Value   -- TODO Bool?
+    , deckReturn            :: Maybe Value   -- TODO Bool?
+    , deckSeparate          :: Maybe Value   -- TODO Bool?
+    , deckTerms             :: Maybe Value   -- TODO [[wtf]]?
+    } deriving (Show, Eq, Generic)
+
+instance FromJSON DeckExtension where
+  parseJSON = withObject "DeckExtension" $ \o -> getBool <$> (o .: "dyn") >>= \case
+      False -> do
+        deckBrowserCollapsed <- o .:? "browserCollapsed"
+        deckConf             <- o .:? "conf"
+        deckExtendNew        <- o .:? "extendNew"
+        deckExtendRev        <- o .:? "extendRev"
+        return NormalDeck {..}
+
+      True -> do
+        deckDelays   <- o .:? "delays"
+        deckResched  <- o .:? "resched"
+        deckReturn   <- o .:? "return"
+        deckSeparate <- o .:? "separate"
+        deckTerms    <- o .:? "terms"
+        return DynamicDeck {..}
+
+-- | Representation of a deck (col.decks).
 data Deck = Deck {
     deckId                :: DeckId
-  , deckName              :: Value         -- TODO String?
-  , deckCollapsed         :: Value         -- TODO Bool?
-  , deckDesc              :: Value         -- TODO String?
+  , deckName              :: Maybe Value         -- TODO String?
+  , deckCollapsed         :: Maybe Value         -- TODO Bool?
+  , deckDesc              :: Maybe Value         -- TODO String?
   , deckMod               :: ModificationTime
-  , deckUsn               :: Value         -- TODO Int?
-  , deckLrnToday          :: Value         -- TODO (Int, Int)?
-  , deckNewToday          :: Value         -- TODO (Int, Int)?
-  , deckRevToday          :: Value         -- TODO (Int, Int)?
-  , deckTimeToday         :: Value         -- TODO (Int, Int)?
+  , deckUsn               :: Maybe Value         -- TODO Int?
+  , deckLrnToday          :: Maybe Value         -- TODO (Int, Int)?
+  , deckNewToday          :: Maybe Value         -- TODO (Int, Int)?
+  , deckRevToday          :: Maybe Value         -- TODO (Int, Int)?
+  , deckTimeToday         :: Maybe Value         -- TODO (Int, Int)?
   , deckExtension         :: DeckExtension
   } deriving (Show, Eq, Generic)
 
 
 instance FromJSON Deck where
   parseJSON = withObject "Deck" $ \o -> do
-    deckName      <- o .: "name"
-    deckCollapsed <- o .: "collapsed"
-    deckDesc      <- o .: "desc"
-    deckId        <- o .: "id"
-    deckMod       <- o .: "mod"
-    deckUsn       <- o .: "usn"
-    deckLrnToday  <- o .: "lrnToday"
-    deckNewToday  <- o .: "newToday"
-    deckRevToday  <- o .: "revToday"
-    deckTimeToday <- o .: "timeToday"
+    deckName      <- o .:? "name"
+    deckCollapsed <- o .:? "collapsed"
+    deckDesc      <- o .:? "desc"
+    deckId        <- o .:  "id"
+    deckMod       <- o .:  "mod"
+    deckUsn       <- o .:? "usn"
+    deckLrnToday  <- o .:? "lrnToday"
+    deckNewToday  <- o .:? "newToday"
+    deckRevToday  <- o .:? "revToday"
+    deckTimeToday <- o .:? "timeToday"
     deckExtension <- parseJSON $ Object o
     return Deck {..}
 
