@@ -21,6 +21,7 @@ module Anki.Common (
   , ModificationTime(..)
   , TimeIntervalInSeconds(..)
   , TimeIntervalInMinutes(..)
+  , TimeIntervalInDays(..)
   , throwErr
   , getTextValue
   , getJsonValue
@@ -123,7 +124,9 @@ dropPrefixOptions :: Options
 dropPrefixOptions = defaultOptions { fieldLabelModifier = dropPrefix }
 
 -- | A wrapper to handle integers and strings with integers.
-newtype WeaklyTypedInt = WeaklyTypedInt { getInt :: Int } deriving (Show, Eq, Num)
+newtype WeaklyTypedInt = WeaklyTypedInt { getInt :: Int } deriving (Eq, Num)
+
+instance Show WeaklyTypedInt where show = show . getInt
 
 instance FromJSON WeaklyTypedInt where
   parseJSON = fmap fromInteger . \case
@@ -134,8 +137,11 @@ instance FromJSON WeaklyTypedInt where
 instance FromField WeaklyTypedInt where
   fromField f = fromInteger <$> fromField f
 
+
 -- | A wrapper to handle booleans, strings with booleans and 0-1 integers.
-newtype WeaklyTypedBool = WeaklyTypedBool { getBool :: Bool } deriving (Show, Eq)
+newtype WeaklyTypedBool = WeaklyTypedBool { getBool :: Bool } deriving (Eq)
+
+instance Show WeaklyTypedBool where show = show . getBool
 
 instance FromJSON WeaklyTypedBool where
   parseJSON = fmap WeaklyTypedBool . \case
@@ -153,7 +159,9 @@ instance FromJSON WeaklyTypedBool where
 
 
 -- | A wrapper handle time in POSIX format.
-newtype ModificationTime = ModificationTime { getModificationTime :: UTCTime } deriving (Show, Eq)
+newtype ModificationTime = ModificationTime { getModificationTime :: UTCTime } deriving (Eq)
+
+instance Show ModificationTime where show = show . getModificationTime
 
 instance Default ModificationTime where
   def = ModificationTime . posixSecondsToUTCTime . fromInteger $ 0
@@ -168,7 +176,9 @@ instance FromJSON ModificationTime where
 
 -- | A wrapper for time interval (in seconds).
 newtype TimeIntervalInSeconds = TimeIntervalInSeconds { getTimeIntervalInSeconds :: NominalDiffTime }
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show TimeIntervalInSeconds where show = show . getTimeIntervalInSeconds
 
 instance Default TimeIntervalInSeconds where
   def = TimeIntervalInSeconds . fromInteger $ 0
@@ -182,7 +192,9 @@ instance FromJSON TimeIntervalInSeconds where
 
 -- | A wrapper for time interval (in minutes).
 newtype TimeIntervalInMinutes = TimeIntervalInMinutes { getTimeIntervalInMinutes :: NominalDiffTime }
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show TimeIntervalInMinutes where show = show . getTimeIntervalInMinutes
 
 instance Default TimeIntervalInMinutes where
   def = TimeIntervalInMinutes . fromInteger $ 0
@@ -192,3 +204,19 @@ instance FromField TimeIntervalInMinutes where
 
 instance FromJSON TimeIntervalInMinutes where
   parseJSON = fmap (TimeIntervalInMinutes . fromInteger . (flip div 60)) . parseJSON
+
+
+-- | A wrapper for time interval (in days).
+newtype TimeIntervalInDays = TimeIntervalInDays { getTimeIntervalInDays :: NominalDiffTime }
+  deriving (Eq)
+
+instance Show TimeIntervalInDays where show = show . getTimeIntervalInDays
+
+instance Default TimeIntervalInDays where
+  def = TimeIntervalInDays . fromInteger $ 0
+
+instance FromField TimeIntervalInDays where
+  fromField f = (TimeIntervalInDays . fromInteger . (flip div (24*60*60))) <$> fromField f
+
+instance FromJSON TimeIntervalInDays where
+  parseJSON = fmap (TimeIntervalInDays . fromInteger . (flip div (24*60*60))) . parseJSON

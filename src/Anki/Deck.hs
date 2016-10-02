@@ -33,7 +33,7 @@ module Anki.Deck (
 
 
 import Anki.Common (WeaklyTypedInt(..), WeaklyTypedBool(..), ModificationTime(..), AnkiException(..))
-import Anki.Common (TimeIntervalInSeconds(..))
+import Anki.Common (TimeIntervalInSeconds(..), TimeIntervalInMinutes(..), TimeIntervalInDays(..))
 import Anki.Common (dropPrefixOptions, getJsonValue, fromDictionary, mkEntry)
 import Data.Aeson (Value(..), FromJSON(..), genericParseJSON)
 import Data.Aeson.Types ((.:), (.:?), withObject)
@@ -83,74 +83,75 @@ instance FromField [DeckOptions] where
   fromField f = getJsonValue f >>= fromDictionary (mkEntry doId DeckOptionsIdInconsistent) f
 
 
--- | Options from cols.deck.dconf.lapse.
-data DeckOptionsLapse = DeckOptionsLapse {
-    dolLeechFails  :: Value -- TODO Int?
-  , dolMinInt      :: Value -- TODO Int?
-  , dolDelays      :: Value -- TODO [Int]?
-  , dolLeechAction :: Value -- TODO Int/Enum?
-  , dolMult        :: Value -- TODO Double?
-  } deriving (Show, Eq, Generic)
-
-instance Default DeckOptionsLapse where
-  def = DeckOptionsLapse {
-    dolLeechFails  = undefined -- TODO
-  , dolMinInt      = undefined -- TODO
-  , dolDelays      = undefined -- TODO
-  , dolLeechAction = undefined -- TODO
-  , dolMult        = undefined -- TODO
-  }
-
-instance FromJSON DeckOptionsLapse where
-  parseJSON = genericParseJSON dropPrefixOptions
-
-
 -- | Options from cols.deck.dconf.new.
 data DeckOptionsNew = DeckOptionsNew {
-    donPerDay        :: Maybe Value -- TODO Int?
-  , donDelays        :: Maybe Value -- TODO (Int, Int)?
-  , donSeparate      :: Maybe Value -- TODO Bool?
-  , donInts          :: Maybe Value -- TODO (Int, Int, Int)?
-  , donInitialFactor :: Maybe Value -- TODO Double?
-  , donBury          :: Maybe Value -- TODO Bool?
-  , donOrder         :: Maybe Value -- TODO Int?
+    donPerDay        :: Int                     -- ^ Number of new cards a day.
+  , donDelays        :: [TimeIntervalInMinutes] -- ^ Duration between checks of a new card.
+  , donSeparate      :: Bool                    -- ^ (not used)
+  , donInts          :: [TimeIntervalInDays]    -- ^ Duration between checks of a regular card.
+  , donInitialFactor :: Double                  -- ^ Starting ease (in permilles)
+  , donBury          :: Bool                    -- ^ Bury related cards until the next day.
+  , donOrder         :: WeaklyTypedBool         -- ^ Don't shuffle cards
   } deriving (Show, Eq, Generic)
 
 instance Default DeckOptionsNew where
   def = DeckOptionsNew {
-    donPerDay        = undefined -- TODO
-  , donDelays        = undefined -- TODO
-  , donSeparate      = undefined -- TODO
-  , donInts          = undefined -- TODO
-  , donInitialFactor = undefined -- TODO
-  , donBury          = undefined -- TODO
-  , donOrder         = undefined -- TODO
+    donPerDay        = 20
+  , donDelays        = TimeIntervalInMinutes <$> [1, 10]
+  , donSeparate      = True
+  , donInts          = TimeIntervalInDays <$> [1, 4, 7]
+  , donInitialFactor = 2500.0
+  , donBury          = True
+  , donOrder         = WeaklyTypedBool True
   }
 
 instance FromJSON DeckOptionsNew where
   parseJSON = genericParseJSON dropPrefixOptions
 
 
+-- | Options from cols.deck.dconf.lapse.
+data DeckOptionsLapse = DeckOptionsLapse {
+    dolLeechFails  :: Int                     -- ^ Leech threshold.
+  , dolMinInt      :: TimeIntervalInDays      -- ^ Minimal interval.
+  , dolDelays      :: [TimeIntervalInMinutes] -- ^ Duration between checks of a lapsed card.
+  , dolLeechAction :: WeaklyTypedBool         -- ^ Don't suspend card after reaching the threshold.
+  , dolMult        :: Double                  -- ^ Reduce check interval by given multiplier.
+  } deriving (Show, Eq, Generic)
+
+instance Default DeckOptionsLapse where
+  def = DeckOptionsLapse {
+    dolLeechFails  = 8
+  , dolMinInt      = TimeIntervalInDays 1
+  , dolDelays      = TimeIntervalInMinutes <$> [10]
+  , dolLeechAction = WeaklyTypedBool False
+  , dolMult        = 0.0
+  }
+
+instance FromJSON DeckOptionsLapse where
+  parseJSON = genericParseJSON dropPrefixOptions
+
+
 -- | Options from cols.deck.dconf.rev
 data DeckOptionsRev = DeckOptionsRev {
-    dorPerDay   :: Maybe Value -- TODO Int?
-  , dorFuzz     :: Maybe Value -- TODO Double?
-  , dorIvlFct   :: Maybe Value -- TODO Double?
-  , dorMaxIvl   :: Maybe Value -- TODO Double?
-  , dorEase4    :: Maybe Value -- TODO Double?
-  , dorBury     :: Maybe Value -- TODO Bool?
-  , dorMinSpace :: Maybe Value -- TODO Int?
+    dorPerDay   :: Int                -- ^ Numbers of maximum cards to review each day.
+  , dorFuzz     :: Double             -- ^ (not used)
+  , dorIvlFct   :: Double             -- ^ Increase check interval by the given multiplier.
+  , dorMaxIvl   :: TimeIntervalInDays -- ^ Maximum interval.
+  , dorEase4    :: Double             -- ^ Increase check interval by the given
+                                      --   multiplier when "easy" button is pressed.
+  , dorBury     :: Bool               -- ^ Bury related cards to the next day.
+  , dorMinSpace :: Maybe Value        -- ^ (not used)
   } deriving (Show, Eq, Generic)
 
 instance Default DeckOptionsRev where
   def = DeckOptionsRev {
-    dorPerDay   = undefined -- TODO
-  , dorFuzz     = undefined -- TODO
-  , dorIvlFct   = undefined -- TODO
-  , dorMaxIvl   = undefined -- TODO
-  , dorEase4    = undefined -- TODO
-  , dorBury     = undefined -- TODO
-  , dorMinSpace = undefined -- TODO
+    dorPerDay   = 100
+  , dorFuzz     = 0.05
+  , dorIvlFct   = 1
+  , dorMaxIvl   = TimeIntervalInDays 36500
+  , dorEase4    = 1.3
+  , dorBury     = True
+  , dorMinSpace = Just (Number 1.0)
   }
 
 instance FromJSON DeckOptionsRev where
