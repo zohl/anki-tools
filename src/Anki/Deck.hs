@@ -48,7 +48,7 @@ type DeckOptionsId = WeaklyTypedInt
 data DeckOptions = DeckOptions {
     doId       :: DeckOptionsId         -- ^ Deck options id.
   , doAutoplay :: Bool                  -- ^ Do play media automatically?
-  , doDyn      :: Bool                  -- ^ Is deck dynamical?
+  , doDyn      :: Maybe Bool            -- ^ Is deck dynamical?
   , doMaxTaken :: TimeIntervalInSeconds -- ^ Ignore answers after given time interval.
   , doName     :: String                -- ^ Name of the options group.
   , doReplayq  :: Bool                  -- ^ Do replay media from question when showing answer?
@@ -64,7 +64,7 @@ instance Default DeckOptions where
   def = DeckOptions {
       doId       = WeaklyTypedInt 0
     , doAutoplay = True
-    , doDyn      = False
+    , doDyn      = Just False
     , doMaxTaken = TimeIntervalInSeconds 60
     , doName     = "Default"
     , doReplayq  = True
@@ -194,33 +194,50 @@ instance FromJSON DeckExtension where
         deckTerms    <- o .:? "terms"
         return DynamicDeck {..}
 
+instance Default DeckExtension where
+  def = undefined
+
 -- | Representation of a deck (col.decks).
 data Deck = Deck {
-    deckId                :: DeckId
-  , deckName              :: Maybe Value         -- TODO String?
-  , deckCollapsed         :: Maybe Value         -- TODO Bool?
-  , deckDesc              :: Maybe Value         -- TODO String?
-  , deckMod               :: ModificationTime
+    deckId                :: DeckId            -- ^ Deck id.
+  , deckName              :: String            -- ^ Deck name.
+  , deckCollapsed         :: Bool              -- ^ Whether is deck collapsed.
+  , deckDesc              :: String            -- ^ Description of the deck.
+  , deckLrnToday          :: Maybe Value       -- TODO (Int, Int)?
+  , deckNewToday          :: Maybe Value       -- TODO (Int, Int)?
+  , deckRevToday          :: Maybe Value       -- TODO (Int, Int)?
+  , deckTimeToday         :: Maybe Value       -- TODO (Int, Int)?
+  , deckMod               :: ModificationTime  -- ^ Modification time
   , deckUsn               :: Maybe Value         -- TODO Int?
-  , deckLrnToday          :: Maybe Value         -- TODO (Int, Int)?
-  , deckNewToday          :: Maybe Value         -- TODO (Int, Int)?
-  , deckRevToday          :: Maybe Value         -- TODO (Int, Int)?
-  , deckTimeToday         :: Maybe Value         -- TODO (Int, Int)?
   , deckExtension         :: DeckExtension
   } deriving (Show, Eq, Generic)
 
+instance Default Deck where
+  def = Deck {
+      deckId        = WeaklyTypedInt 0
+    , deckName      = "Default"
+    , deckCollapsed = False
+    , deckDesc      = ""
+    , deckMod       = def
+    , deckUsn       = def
+    , deckLrnToday  = undefined
+    , deckNewToday  = undefined
+    , deckRevToday  = undefined
+    , deckTimeToday = undefined
+    , deckExtension = def
+    }
 
 instance FromJSON Deck where
   parseJSON = withObject "Deck" $ \o -> do
-    deckName      <- o .:? "name"
-    deckCollapsed <- o .:? "collapsed"
-    deckDesc      <- o .:? "desc"
     deckId        <- o .:  "id"
-    deckMod       <- o .:  "mod"
+    deckName      <- o .:  "name"
+    deckCollapsed <- o .:  "collapsed"
+    deckDesc      <- o .:  "desc"
     deckUsn       <- o .:? "usn"
     deckLrnToday  <- o .:? "lrnToday"
     deckNewToday  <- o .:? "newToday"
     deckRevToday  <- o .:? "revToday"
+    deckMod       <- o .:  "mod"
     deckTimeToday <- o .:? "timeToday"
     deckExtension <- parseJSON $ Object o
     return Deck {..}
