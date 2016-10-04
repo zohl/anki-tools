@@ -164,10 +164,10 @@ type DeckId = WeaklyTypedInt
 -- | Volatile fields of col.decks.
 data DeckExtension
   = NormalDeck {
-      deckBrowserCollapsed  :: Maybe Value   -- TODO Bool?
-    , deckConf              :: Maybe Value   -- TODO DeckOptionsId?
-    , deckExtendNew         :: Maybe Value   -- TODO Int?
-    , deckExtendRev         :: Maybe Value   -- TODO Int?
+      deckBrowserCollapsed  :: Maybe Bool    -- ^ Whether is deck collapsed.
+    , deckConf              :: DeckOptionsId -- ^ Id of configuration.
+    , deckExtendNew         :: Int           -- ^ Maximal number of new cards in custom study.
+    , deckExtendRev         :: Int           -- ^ Maximal number of cards to review in custom study.
     }
   | DynamicDeck {
       deckDelays            :: Maybe Value   -- TODO Int?
@@ -181,9 +181,9 @@ instance FromJSON DeckExtension where
   parseJSON = withObject "DeckExtension" $ \o -> getBool <$> (o .: "dyn") >>= \case
       False -> do
         deckBrowserCollapsed <- o .:? "browserCollapsed"
-        deckConf             <- o .:? "conf"
-        deckExtendNew        <- o .:? "extendNew"
-        deckExtendRev        <- o .:? "extendRev"
+        deckConf             <- o .:  "conf"
+        deckExtendNew        <- o .:  "extendNew"
+        deckExtendRev        <- o .:  "extendRev"
         return NormalDeck {..}
 
       True -> do
@@ -195,7 +195,12 @@ instance FromJSON DeckExtension where
         return DynamicDeck {..}
 
 instance Default DeckExtension where
-  def = undefined
+  def = NormalDeck {
+      deckBrowserCollapsed = Nothing
+    , deckConf             = 1
+    , deckExtendNew        = 10
+    , deckExtendRev        = 50
+    }
 
 -- | Representation of a deck (col.decks).
 data Deck = Deck {

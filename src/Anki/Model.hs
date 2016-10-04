@@ -11,6 +11,7 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Anki.Model (
     ModelId
@@ -22,29 +23,55 @@ module Anki.Model (
 import Anki.Common (WeaklyTypedInt, ModificationTime, AnkiException(..)) 
 import Anki.Common (dropPrefixOptions, getJsonValue, fromDictionary, mkEntry)
 import Data.Aeson (Value(..), FromJSON(..), genericParseJSON)
+import Data.Text (Text)
+import Data.Default (Default(..))
 import Database.SQLite.Simple.FromField (FromField(..))
 import GHC.Generics (Generic)
+import qualified Data.Text as T
 
 -- | Type for model ids.
 type ModelId = WeaklyTypedInt
 
 -- | Model from col.models
 data Model = Model {
-    modelId        :: ModelId
-  , modelCss       :: Value -- String?
-  , modelDid       :: Value -- DeckId?
-  , modelFlds      :: [ModelField]
-  , modelLatexPre  :: Value -- TODO String?
-  , modelLatexPost :: Value -- TODO String?
-  , modelMod       :: ModificationTime
-  , modelName      :: Value -- TODO String?
-  , modelSortf     :: Value -- TODO Int?
-  , modelTags      :: Value -- TODO: [wtf]?
-  , modelTmpls     :: [ModelTemplate]
-  , modelType      :: Value -- TODO Int?
-  , modelUsn       :: Value -- TODO Int?
-  , modelVers      :: Value -- TODO [wtf]?
+    modelId        :: ModelId          -- ^ Id of a model.
+  , modelCss       :: Text             -- ^ Style of cards.
+  , modelDid       :: Value            -- TODO DeckId?
+  , modelFlds      :: [ModelField]     -- ^ Description of fields.
+  , modelLatexPre  :: Text             -- ^ TeX header
+  , modelLatexPost :: Text             -- ^ Tex footer
+  , modelName      :: String           -- ^ Name of a model.
+  , modelSortf     :: Value            -- TODO Int?
+  , modelTags      :: Value            -- TODO [wtf]?
+  , modelTmpls     :: [ModelTemplate]  -- ^ Description of templates.
+  , modelType      :: Value            -- TODO Bool?
+  , modelVers      :: Value            -- TODO [wtf]?
+  , modelMod       :: ModificationTime -- ^ Modification time.
+  , modelUsn       :: Value            -- TODO Int?
   } deriving (Show, Eq, Generic)
+
+instance Default Model where
+  def = Model {
+      modelId        = 0
+    , modelCss       = ""
+    , modelDid       = undefined
+    , modelFlds      = []
+    , modelLatexPre  = T.concat [
+        "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n"
+      , "\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n"
+      , "\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n"
+      , "\\begin{document}\n"
+      ]
+    , modelLatexPost = "\\end{document}"
+    , modelName      = ""
+    , modelSortf     = undefined
+    , modelTags      = undefined
+    , modelTmpls     = []
+    , modelType      = undefined
+    , modelVers      = undefined
+    , modelMod       = def
+    , modelUsn       = undefined -- TODO
+    }
 
 instance FromJSON Model where
   parseJSON = genericParseJSON dropPrefixOptions
