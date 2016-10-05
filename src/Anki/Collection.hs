@@ -20,11 +20,13 @@ module Anki.Collection (
   ) where
 
 
-import Anki.Common (ModificationTime, AnkiException(..), throwErr)
+import Anki.Common (ModificationTime, TimeIntervalInMinutes(..), AnkiException(..), throwErr)
 import Anki.Common (dropPrefixOptions, getTextValue, getJsonValue, fromDictionary)
 import Anki.Deck (DeckId, Deck, DeckOptions)
+import Anki.Card (CardId)
 import Anki.Model (ModelId, Model)
 import Data.Aeson (Value(..), decode, FromJSON(..), genericParseJSON)
+import Data.Default(Default(..))
 import Data.Text (Text)
 import Database.SQLite.Simple (FromRow(..), field)
 import Database.SQLite.Simple.FromField (FromField(..))
@@ -70,23 +72,43 @@ instance FromRow Collection where
 
 -- | Global opitions.
 data GlobalOptions = GlobalOptions {
-   goNextPos       :: Maybe Value     -- TODO Int?
- , goEstTimes      :: Maybe Value     -- TODO Bool?
- , goSortBackwards :: Maybe Value     -- TODO Bool?
- , goSortType      :: Maybe Value     -- TODO String?
- , goTimeLim       :: Maybe Value     -- TODO Int?
- , goActiveDecks   :: [DeckId]  -- ^ TODO
- , goAddToCur      :: Maybe Value     -- TODO Bool?
- , goCurDeck       :: Maybe Value     -- TODO DeckId?
- , goCurModel      :: ModelId   -- ^ TODO
- , goLastUnburied  :: Maybe Value     -- TODO Int?
- , goCollapseTime  :: Maybe Value     -- TODO Int?
- , goActiveCols    :: Maybe Value     -- TODO [String]?
- , goSavedFilters  :: Maybe Value     -- TODO [wtf]?
- , goDueCounts     :: Maybe Value     -- TODO Bool?
- , goNewBury       :: Maybe Value     -- TODO Bool?
- , goNewSpread     :: Maybe Value     -- TODO Int?
+   goNextPos       :: Int                   -- ^ New card position.
+ , goEstTimes      :: Bool                  -- ^ Do show estimates.
+ , goSortBackwards :: Bool                  -- ^ Reverse order in cards browser.
+ , goSortType      :: String                -- ^ How to sort cards in the browser.
+ , goTimeLim       :: TimeIntervalInMinutes -- ^ Timebox time limit.
+ , goActiveDecks   :: [DeckId]              -- ^ Currently active decks.
+ , goAddToCur      :: Bool                  -- ^ Unconditionally add cards to current deck.
+ , goCurDeck       :: DeckId                -- ^ Current deck.
+ , goCurModel      :: Maybe ModelId         -- ^ Current model.
+ , goLastUnburied  :: Maybe CardId          -- ^ The last unburied card.
+ , goCollapseTime  :: Maybe Value           -- TODO wtf?
+ , goActiveCols    :: Maybe Value           -- TODO [String]?
+ , goSavedFilters  :: Maybe Value           -- TODO [wtf]?
+ , goDueCounts     :: Bool                  -- ^ Show checked cards in progress.
+ , goNewBury       :: Maybe Value           -- TODO Bool? not used?
+ , goNewSpread     :: Int                   -- ^ How to combine new and old cards.
  } deriving (Show, Eq, Generic)
+
+instance Default GlobalOptions where
+  def = GlobalOptions {
+      goNextPos       = 1
+    , goEstTimes      = True
+    , goSortBackwards = False
+    , goSortType      = "noteFld"
+    , goTimeLim       = TimeIntervalInMinutes 0
+    , goActiveDecks   = [1]
+    , goAddToCur      = True
+    , goCurDeck       = 1
+    , goCurModel      = Nothing
+    , goLastUnburied  = Nothing
+    , goCollapseTime  = undefined -- TODO 1200.0
+    , goActiveCols    = undefined -- TODO Nothing
+    , goSavedFilters  = undefined -- Nothing
+    , goDueCounts     = True
+    , goNewBury       = undefined -- TODO True
+    , goNewSpread     = 0
+    }
 
 instance FromJSON GlobalOptions where
   parseJSON = genericParseJSON dropPrefixOptions
