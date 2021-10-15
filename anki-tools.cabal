@@ -52,7 +52,7 @@ library
   if flag(dev)
     ghc-options:      -Wall -Werror
   else
-    ghc-options:      -O2 -Wall
+    ghc-options:      -Wall -Werror -O2
 
 
 executable anki-tools-test
@@ -67,4 +67,4 @@ executable anki-tools-test
   if flag(dev)
     ghc-options:      -Wall -Werror
   else
-    ghc-options:      -O2 -Wall
+    ghc-options:      -Wall -Werror -O2

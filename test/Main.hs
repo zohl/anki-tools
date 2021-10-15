@@ -4,8 +4,8 @@ import Data.Default (def)
 import System.Environment (getArgs)
 import Anki.Tools
 import Anki.Collection
-import Anki.Note
-import Anki.Card
+-- import Anki.Note
+-- import Anki.Card
 import Anki.UserProfile
 
 
@@ -28,15 +28,8 @@ main = do
   args <- splitArgs <$> getArgs
 
   userProfile <- getUserProfile $ lookup "--user-profile" args
-  -- let output = show userProfile
-
-  -- collection <- getCollection userProfile $ read <$> (lookup "--collection" args)
-  -- let output = show collection
-
-  -- notes <- getNotes def userProfile
-  -- let output = show notes
-
+  _collection <- getCollection userProfile $ read <$> (lookup "--collection" args)
+  _notes <- getNotes def userProfile
   cards <- getCards def userProfile
-  let output = show cards
 
-  putStrLn output
+  putStrLn (show cards)

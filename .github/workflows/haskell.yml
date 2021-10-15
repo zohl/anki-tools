@@ -1,0 +1,46 @@
+name: Haskell CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cabal:
+          - "3.6"
+        ghc:
+          - "8.6.5"
+          - "8.8.4"
+          - "8.10.7"
+    env:
+      CONFIG: "--enable-tests --enable-benchmarks"
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-haskell@v1.1.4
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: ${{ matrix.cabal }}
+      - run: cabal update
+      - run: cabal freeze $CONFIG
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cabal/store
+            dist-newstyle
+          key: ${{ runner.os }}-${{ matrix.ghc }}-${{ hashFiles('cabal.project.freeze') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.ghc }}-
+      - run: cabal install tasty-discover
+      - run: cabal build $CONFIG
+      - run: cabal test $CONFIG --test-show-details=always
+      - run: cabal bench $CONFIG
+      - run: cabal haddock $CONFIG
+      - run: cabal sdist
