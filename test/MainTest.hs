@@ -1,5 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 
+module MainTest where
+
 import Data.Default (def)
 import System.Environment (getArgs)
 import Anki.Tools
@@ -8,6 +10,14 @@ import Anki.Collection
 -- import Anki.Card
 import Anki.UserProfile
 
+import Test.Hspec
+
+spec_getUserProfile :: Spec
+spec_getUserProfile =
+  describe "getUserProfile" $
+    it "somehow handles Nothing" $ do
+      userProfile <- getUserProfile Nothing
+      userProfile `shouldBe` UserProfile "default"
 
 splitArgs :: [String] -> [(String, String)]
 splitArgs []       = []

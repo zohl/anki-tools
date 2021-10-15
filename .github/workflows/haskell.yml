@@ -20,7 +20,7 @@ jobs:
           - "8.8.4"
           - "8.10.7"
     env:
-      CONFIG: "--enable-tests --enable-benchmarks"
+      CONFIG: "--enable-tests" # --enable-benchmarks
 
     steps:
       - uses: actions/checkout@v2
@@ -41,6 +41,6 @@ jobs:
       - run: cabal install tasty-discover
       - run: cabal build $CONFIG
       - run: cabal test $CONFIG --test-show-details=always
-      - run: cabal bench $CONFIG
+#     - run: cabal bench $CONFIG
       - run: cabal haddock $CONFIG
       - run: cabal sdist
