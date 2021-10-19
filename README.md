@@ -1,5 +1,7 @@
 # anki-tools
 
+[![Haskell CI Status](https://github.com/zohl/anki-tools/workflows/Haskell%20CI/badge.svg)](https://github.com/zohl/anki-tools/actions/workflows/haskell.yml)
+
 ## Description
 Tools for interacting with Anki database
 
